@@ -12,14 +12,9 @@ type Handshake struct {
 
 }
 
-func Init() {
+func run_sched() {
 	ch := make(chan *websocket.Conn)
 	scheduler = &ch
-
-	go run_sched()
-}
-
-func run_sched() {
 	hs_ch := make(chan struct {
 		ws       *websocket.Conn
 		hanshake Handshake

@@ -16,6 +16,7 @@ var upgrader = websocket.Upgrader {
 var rdb *redis.Conn
 
 func main() {
+	go run_sched()
 	initRedis()
 	initWebserver()
 }
@@ -43,10 +44,11 @@ func initWebserver() {
 }
 
 func websocketRoot(w http.ResponseWriter, r *http.Request) {
-	_, err := upgrader.Upgrade(w, r, nil)
+	cann, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
+	*scheduler <- cann
 }
 
 // This function will exit on failure
