@@ -5,6 +5,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/gorilla/sessions"
 	"net/http"
 	"os"
 )
@@ -13,6 +14,7 @@ var upgrader = websocket.Upgrader {
 	ReadBufferSize: 1024,
 	WriteBufferSize: 1024,
 }
+var store = sessions.NewCookieStore([]byte(getOsArg("SESSION_KEY")))
 var rdb *redis.Conn
 
 func main() {
@@ -33,7 +35,8 @@ func initRedis() {
 func initWebserver() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", websocketRoot)
+	r.HandleFunc("/room/enter/{}", enterRoom)
+	r.HandleFunc("/room/{}/stream", startStream)
 
 	fmt.Println("Webserver Running")
 	err := http.ListenAndServe(getOsArg("WS_INTERFACE"), r)
@@ -43,7 +46,25 @@ func initWebserver() {
 	}
 }
 
-func websocketRoot(w http.ResponseWriter, r *http.Request) {
+func enterRoom(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "asv-store")
+	vars := mux.Vars(r)
+
+	key, present := vars["key"]
+
+	if len(key) == 0 || !present {
+		http.Error(w, "No key", http.StatusBadRequest)
+		return
+	}
+
+	ses_key := session.Values["key"]
+	if ses_key != key {
+		// Disconnect old stream if present
+		session.Values["key"] = key
+	}
+}
+
+func startStream(w http.ResponseWriter, r *http.Request) {
 	cann, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return

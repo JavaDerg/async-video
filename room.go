@@ -9,6 +9,10 @@ var scheduler *chan *websocket.Conn
 
 type Handshake struct {
 	room string
+	auth_key string
+}
+
+type PermModel struct {
 
 }
 
