@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"github.com/gorilla/sessions"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
+	"async-video/room"
 )
 
 var upgrader = websocket.Upgrader {
@@ -18,7 +19,7 @@ var store = sessions.NewCookieStore([]byte(getOsArg("SESSION_KEY")))
 var rdb *redis.Conn
 
 func main() {
-	go run_sched()
+	go room.RunScheduler()
 	initRedis()
 	initWebserver()
 }
@@ -69,7 +70,7 @@ func startStream(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	*scheduler <- cann
+	room.Schedule(cann)
 }
 
 // This function will exit on failure

@@ -1,4 +1,4 @@
-package main
+package room
 
 import (
 	"fmt"
@@ -12,11 +12,7 @@ type Handshake struct {
 	auth_key string
 }
 
-type PermModel struct {
-
-}
-
-func run_sched() {
+func RunScheduler() {
 	ch := make(chan *websocket.Conn)
 	scheduler = &ch
 	hs_ch := make(chan struct {
@@ -31,6 +27,10 @@ func run_sched() {
 
 		}
 	}
+}
+
+func Schedule(conn *websocket.Conn) {
+	*scheduler <- conn
 }
 
 func awaitHandshake(ws *websocket.Conn, ch *chan struct {
