@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
+	"log"
 	"net/http"
 	"os"
 	"async-video/room"
@@ -51,6 +54,8 @@ func enterRoom(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "asv-store")
 	vars := mux.Vars(r)
 
+	uKey, save := getUKey(session)
+
 	key, present := vars["key"]
 
 	if len(key) == 0 || !present {
@@ -58,11 +63,33 @@ func enterRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ses_key := session.Values["key"]
-	if ses_key != key {
+	sesKey := session.Values["key"]
+	if sesKey != key {
+		go room.Disconnect(uKey, key)
 		// Disconnect old stream if present
 		session.Values["key"] = key
 	}
+
+	if save {
+		if err := session.Save(r, w); err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+		}
+	}
+}
+
+func getUKey(ses *sessions.Session) (string, bool) {
+	key, present := ses.Values["ukey"]
+	if len(key.(string)) == 0 || !present {
+		b := make([]byte, 16)
+		_, err := rand.Read(b)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ses.Values["ukey"] = hex.EncodeToString(b)
+		return ses.Values["ukey"].(string), true
+	}
+
+	return key.(string), false
 }
 
 func startStream(w http.ResponseWriter, r *http.Request) {

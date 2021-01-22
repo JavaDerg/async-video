@@ -24,13 +24,17 @@ func RunScheduler() {
 		case conn := <-*scheduler:
 			go awaitHandshake(conn, &hs_ch)
 		case msg := <- hs_ch:
-
+			_ = msg
 		}
 	}
 }
 
 func Schedule(conn *websocket.Conn) {
 	*scheduler <- conn
+}
+
+func Disconnect(ukey string, rkey string) {
+
 }
 
 func awaitHandshake(ws *websocket.Conn, ch *chan struct {
