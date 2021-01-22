@@ -21,7 +21,7 @@ type RoomKeeper struct {
 	inner Room
 }
 
-func (r *Rooms) GetOrMake(uKey string, rKey string) (RoomKeeper, bool) {
+func (r *Rooms) GetOrMake(uKey string, rKey string) (*RoomKeeper, bool) {
 	room, exists := rooms.rooms.Load(rKey)
 	newRoom := false
 	if !exists {
@@ -32,5 +32,5 @@ func (r *Rooms) GetOrMake(uKey string, rKey string) (RoomKeeper, bool) {
 		}
 		newRoom = true
 	}
-	return room, newRoom
+	return room.(*RoomKeeper), newRoom
 }
