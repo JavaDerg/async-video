@@ -1,6 +1,6 @@
 use crate::manager::Manager;
-use actix::{Actor, Addr, Context, Message, Handler};
 use crate::user_con::UserCon;
+use actix::{Actor, Addr, Context, Handler, Message};
 use std::collections::HashMap;
 
 pub struct Room {
@@ -11,10 +11,7 @@ pub struct Room {
 
 pub enum RoomRequest {
     JoinRoom(String),
-    UpdateUsername {
-        old: String,
-        new: String,
-    }
+    UpdateUsername { old: String, new: String },
 }
 
 impl Actor for Room {
@@ -22,7 +19,7 @@ impl Actor for Room {
 
     fn stopped(&mut self, ctx: &mut Self::Context) {
         self.manager
-            .do_send(crate::manager::RoomRequest::Delete(self.id.clone()));
+            .do_send(crate::manager::ManagerRoomRequest::Delete(self.id.clone()));
     }
 }
 

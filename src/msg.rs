@@ -9,8 +9,5 @@ pub enum Command {
 #[serde(tag = "type", content = "data")]
 pub enum Response {
     Error(String),
-    UsernameUpdate {
-        target: String,
-        new: String,
-    },
+    UsernameUpdate { target: String, new: String },
 }
