@@ -1,3 +1,5 @@
+use actix::Message;
+
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum Command {
@@ -5,7 +7,7 @@ pub enum Command {
     EnterRoom(String),
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum Response {
     Error(String),

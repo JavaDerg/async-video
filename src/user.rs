@@ -1,7 +1,7 @@
 use crate::manager::{Manager, ManagerRoomRequest};
 use crate::msg::{Command, Response};
 use crate::room::{Room, RoomRequest};
-use actix::{Actor, Addr, Context, Handler, Message, StreamHandler, ResponseFuture};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, Message, ResponseFuture, StreamHandler};
 use actix_web_actors::ws;
 use actix_web_actors::ws::ProtocolError;
 
@@ -12,11 +12,15 @@ pub struct User {
     manager: Addr<Manager>,
 }
 
-pub struct UserCon(Addr<User>);
+pub struct UserCon(pub User);
 
-pub struct IncomingMessage(Command);
+pub struct IncomingMessage(pub Command);
 
-pub struct OutgoingMessage(Response);
+pub struct OutgoingMessage(pub Response);
+
+pub enum UserMutator {
+    Username(String),
+}
 
 impl User {
     pub fn new(manager: Addr<Manager>) -> Self {
@@ -28,10 +32,6 @@ impl User {
     }
 }
 
-impl Actor for User {
-    type Context = Context<Self>;
-}
-
 impl Actor for UserCon {
     type Context = ws::WebsocketContext<Self>;
 }
@@ -41,6 +41,10 @@ impl Message for IncomingMessage {
 }
 
 impl Message for OutgoingMessage {
+    type Result = ();
+}
+
+impl Message for UserMutator {
     type Result = ();
 }
 
@@ -56,7 +60,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserCon {
                             &serde_json::to_string(&Response::Error(String::from(
                                 "Received json of questionable quality.",
                             )))
-                                .unwrap(),
+                            .unwrap(),
                         );
                     }
                 };
@@ -66,16 +70,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserCon {
     }
 }
 
-impl Handler<IncomingMessage> for User {
+impl Handler<IncomingMessage> for UserCon {
     type Result = ResponseFuture<()>;
 
-    fn handle(&mut self, msg: IncomingMessage, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: IncomingMessage, ctx: &mut Self::Context) -> Self::Result {
         match msg.0 {
             Command::EnterRoom(room_id) => {
                 let copy = self.clone();
                 Box::pin(async move {
-                    let lel = copy.manager.send(ManagerRoomRequest::Query(room_id)).await.unwrap();
-                    if let Some(room) = lel {
+                    let addr = copy
+                        .manager
+                        .send(ManagerRoomRequest::Query(room_id))
+                        .await
+                        .unwrap();
+                    if let Some(room) = addr {
                         // TODO: Join room
                     } else {
                         // TODO: Create new room
@@ -83,15 +91,32 @@ impl Handler<IncomingMessage> for User {
                 })
             }
             Command::SetUsername(uname) => {
-                if let Some(room) = &self.room_handle {
-                    room.do_send(RoomRequest::UpdateUsername {
-                        old: self.user_name.clone(),
+                if let Some(room) = &self.0.room_handle {
+                    let req = room.send(RoomRequest::UpdateUsername {
+                        old: self.0.user_name.clone(),
                         new: uname.clone(),
                     });
+                    let this = ctx.address();
+                    Box::pin(async move {
+                        if req.await.unwrap() {
+                            this.send(UserMutator::Username(uname));
+                        }
+                    })
+                } else {
+                    self.user_name = uname;
+                    Box::pin(async move {})
                 }
-                self.user_name = uname;
-                Box::pin(async move {})
             }
+        }
+    }
+}
+
+impl Handler<UserMutator> for UserCon {
+    type Result = ();
+
+    fn handle(&mut self, msg: UserMutator, _: &mut Self::Context) -> Self::Result {
+        match msg {
+            UserMutator::Username(uname) => self.0.user_name = uname,
         }
     }
 }

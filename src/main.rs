@@ -7,7 +7,7 @@ use actix_web_actors::ws;
 mod manager;
 mod msg;
 mod room;
-mod user_con;
+mod user;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -23,7 +23,9 @@ async fn index(
     stream: web::Payload,
     manager: web::Data<Addr<Manager>>,
 ) -> Result<HttpResponse, Error> {
-    let resp = ws::start(user_con::UserCon::new((**manager).clone()), &req, stream);
-    println!("{:?}", resp);
-    resp
+    ws::start(
+        user::UserCon(user::User::new((**manager).clone())),
+        &req,
+        stream,
+    )
 }
