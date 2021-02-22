@@ -1,4 +1,3 @@
 # async-video
-a youtube (a)sync player
+A alternative to sync video or watchtogether
 
-Fuck you liam
