@@ -5,9 +5,7 @@ authors = ["post-rex <post-rex@pm.me>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.10"
-actix-web = "3.3.2"
-actix-web-actors = "3.0.0"
 serde = { version = "1.0.120", features =  ["derive"] }
 serde_json = "1.0.61"
-rand = "0.8.2"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
+warp = "0.3"
