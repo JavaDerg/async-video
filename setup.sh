@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! type "cargo" > /dev/null; then
+if ! type "cargo" 2>&1 /dev/null 2>&1; then
   echo "cargo command not found"
   while true; do
     read -rp "Do you wish to install rust from rustup.rs? y/n" yn
@@ -14,7 +14,7 @@ fi
 cargo fetch # fetch rust dependencies
 
 pushd js
-if ! type "yarn" > /dev/null; then
+if ! type "yarn" 2>&1 /dev/null 2>&1; then
   echo "yarn not found"
   while true; do
     read -rp "Do you wish to install yarn from npm? y/n" yn
