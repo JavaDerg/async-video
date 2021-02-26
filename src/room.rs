@@ -4,7 +4,9 @@ use std::rc::Weak;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
+use crate::broadcast::{Sender, Receiver};
 use rand::Rng;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio_stream::Stream;
 use uuid::Uuid;
@@ -22,6 +24,9 @@ pub struct Room {
     pause_subtraction: Duration,
     // Members
     members: HashMap<Uuid, String>,
+    // Stream
+    broadcaster: Sender<StateUpdate>,
+    receiver: Receiver<StateUpdate>
 }
 
 pub struct RoomRef(Weak<RwLock<Room>>);
@@ -32,17 +37,25 @@ pub enum StateUpdate {
 }
 
 impl Room {
-    pub fn new<S: Into<String>>(id: S) -> Self {
+    pub fn new<S: Into<String>>(id: S) -> (Self, Receiver<StateUpdate>) {
         let now = Instant::now();
-        Self {
+        let (tx, rx) = crate::broadcast::unbounded();
+        let mut lw = rx.clone();
+        lw.downgrade();
+        (Self {
             id: id.into(),
             video_index: 0,
-            playlist: vec![(String::from("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), Uuid::nil())],
+            playlist: vec![(
+                String::from("https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+                Uuid::nil(),
+            )],
             playing_since: now,
             paused_since: Some(now),
             pause_subtraction: now - now,
             members: HashMap::default(),
-        }
+            broadcaster: tx,
+            receiver: lw
+        }, rx)
     }
 
     pub fn time(&self) -> Duration {

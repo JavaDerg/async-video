@@ -6,7 +6,9 @@ pub async fn gen_id() -> Result<impl Reply, Rejection> {
 }
 
 pub async fn enter_room(ws: warp::ws::Ws, room_id: String) -> Result<impl Reply, Rejection> {
-    Ok(ws.on_upgrade(|socket| async move { handle_stream(socket).await; }))
+    Ok(ws.on_upgrade(|socket| async move {
+        handle_stream(socket).await;
+    }))
 }
 
 pub async fn handle_stream(ws: warp::ws::WebSocket) {

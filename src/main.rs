@@ -1,6 +1,6 @@
+mod broadcast;
 mod handler;
 mod room;
-mod broadcast;
 
 use std::net::SocketAddr;
 use warp::Filter;
