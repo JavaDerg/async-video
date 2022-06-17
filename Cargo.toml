@@ -11,7 +11,7 @@ rmp-serde = "0.15.4"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "sync"] }
 warp = "0.3"
 warp-embed = { git = "https://github.com/post-rex/warp-embed" }
-rust-embed = "5.9"
+rust-embed = "6.3"
 tokio-stream = "0.1"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 rand = "0.8.3"
